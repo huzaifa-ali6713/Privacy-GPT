@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "wouter";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
+import { ChatbotAvatar } from "@/components/ChatbotAvatar";
+import { CustomizationPanel } from "@/components/CustomizationPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,12 +16,47 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useChatStreaming } from "@/hooks/use-chat-streaming";
+import { useCustomization } from "@/context/CustomizationContext";
 import { cn } from "@/lib/utils";
-
 import { MarkdownText } from "@/components/MarkdownText";
+
+function AssistantBubble({ content, isStreaming = false }: { content?: string; isStreaming?: boolean }) {
+  const { settings } = useCustomization();
+
+  const styleMap = {
+    glass: "glass-panel text-foreground",
+    solid: "bg-card text-foreground border border-border",
+    minimal: "text-foreground",
+  };
+
+  return (
+    <div className={cn(
+      "max-w-[85%] rounded-2xl px-5 py-4 text-base transition-all duration-300",
+      styleMap[settings.assistantStyle]
+    )}>
+      <div className="flex items-center gap-2 mb-2 text-primary text-sm font-medium">
+        <ChatbotAvatar size="sm" />
+        <span className="text-xs opacity-60">{settings.chatbotName}</span>
+      </div>
+      {isStreaming && !content ? (
+        <div className="flex items-center h-6 gap-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" />
+          <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:0.2s]" />
+          <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:0.4s]" />
+        </div>
+      ) : (
+        <>
+          <MarkdownText content={content || ""} />
+          {isStreaming && <span className="inline-block w-1.5 h-4 ml-1 bg-primary animate-pulse align-middle" />}
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function ChatPage() {
   const queryClient = useQueryClient();
+  const { settings } = useCustomization();
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [inputMessage, setInputMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -52,20 +88,14 @@ export default function ChatPage() {
     setInputMessage("");
 
     if (!currentConvId) {
-      // Create new conversation first
       const newConv = await createConversation.mutateAsync({
         data: { title: messageToSend.slice(0, 30) + (messageToSend.length > 30 ? "..." : "") },
       });
       currentConvId = newConv.id;
       setActiveConversationId(newConv.id);
-      
-      // Invalidate list to show new conversation
       queryClient.invalidateQueries({ queryKey: getListOpenaiConversationsQueryKey() });
     }
 
-    // Now append a temporary user message locally for immediate UI response?
-    // Actually, streaming hook doesn't handle local state, so we just trigger it and let the server response + refetch update the UI.
-    // Wait, we can patch the cache to show user message immediately.
     if (currentConvId) {
       queryClient.setQueryData(getGetOpenaiConversationQueryKey(currentConvId), (old: any) => {
         if (!old) return old;
@@ -77,7 +107,6 @@ export default function ChatPage() {
           ],
         };
       });
-      
       await sendMessage(messageToSend, currentConvId);
     }
   };
@@ -89,15 +118,12 @@ export default function ChatPage() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListOpenaiConversationsQueryKey() });
-          if (activeConversationId === id) {
-            setActiveConversationId(null);
-          }
+          if (activeConversationId === id) setActiveConversationId(null);
         },
       }
     );
   };
 
-  // Auto scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -105,20 +131,25 @@ export default function ChatPage() {
   }, [activeConversation?.messages, streamingContent]);
 
   return (
-    <div className="flex h-[100dvh] w-full bg-background text-foreground font-sans overflow-hidden">
+    <div className="flex h-[100dvh] w-full bg-background text-foreground overflow-hidden transition-colors duration-500">
       <AnimatedBackground />
 
       {/* Sidebar */}
-      <div className="w-72 flex-shrink-0 glass-panel border-r border-white/5 flex flex-col z-10 hidden md:flex">
-        <div className="p-4 flex items-center gap-2 text-primary">
-          <Sparkles className="h-6 w-6" />
-          <h1 className="font-bold text-xl tracking-tight text-white">Nova AI</h1>
+      <div className="w-72 flex-shrink-0 glass-panel border-r border-white/5 flex flex-col z-10 hidden md:flex transition-colors duration-500">
+        <div className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <ChatbotAvatar size="sm" />
+            <h1 className="font-bold text-base tracking-tight text-foreground transition-all duration-300">
+              {settings.chatbotName}
+            </h1>
+          </div>
+          <CustomizationPanel />
         </div>
 
-        <div className="p-3">
+        <div className="px-3 pb-2">
           <Button
             onClick={handleNewChat}
-            className="w-full justify-start gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 shadow-none"
+            className="w-full justify-start gap-2 bg-white/5 hover:bg-white/10 text-foreground border border-white/10 shadow-none"
             variant="outline"
           >
             <Plus className="h-4 w-4" />
@@ -140,8 +171,8 @@ export default function ChatPage() {
                   className={cn(
                     "flex items-center justify-between group px-3 py-2 rounded-md cursor-pointer transition-colors text-sm",
                     activeConversationId === conv.id
-                      ? "bg-primary/20 text-white"
-                      : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                      ? "bg-primary/20 text-foreground"
+                      : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
                   )}
                 >
                   <div className="flex items-center gap-2 truncate">
@@ -164,28 +195,46 @@ export default function ChatPage() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative z-10 glass-panel md:rounded-l-2xl md:my-4 md:mr-4 md:border border-white/5 shadow-2xl">
+      <div className="flex-1 flex flex-col relative z-10 glass-panel md:rounded-l-2xl md:my-4 md:mr-4 md:border border-white/5 shadow-2xl transition-colors duration-500">
+
         {/* Mobile Header */}
         <div className="md:hidden p-4 border-b border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-primary">
-            <Sparkles className="h-5 w-5" />
-            <span className="font-bold text-lg text-white">Nova AI</span>
+          <div className="flex items-center gap-2.5">
+            <ChatbotAvatar size="sm" />
+            <span className="font-bold text-base text-foreground">{settings.chatbotName}</span>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleNewChat}>
-            <Plus className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <CustomizationPanel />
+            <Button variant="ghost" size="icon" onClick={handleNewChat}>
+              <Plus className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8" ref={scrollRef}>
           {!activeConversationId && (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-6">
-              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <Sparkles className="h-10 w-10 text-primary" />
+              <ChatbotAvatar size="lg" />
+              <div>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-3 transition-all duration-300">
+                  How can I help you today?
+                </h2>
+                <p className="text-muted-foreground text-lg">
+                  Ask me anything — I'm here to help.
+                </p>
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">How can I help you today?</h2>
-              <p className="text-muted-foreground text-lg">
-                Ask me anything — I'm here to help.
-              </p>
+              <div className="flex flex-wrap gap-2 justify-center max-w-sm">
+                {["Explain quantum computing", "Write a Python script", "Plan a trip to Japan", "Brainstorm startup ideas"].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setInputMessage(s)}
+                    className="px-3 py-1.5 text-xs rounded-full border border-white/10 bg-white/5 text-muted-foreground hover:text-foreground hover:bg-white/10 transition-all"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -195,8 +244,8 @@ export default function ChatPage() {
                 <div className="flex justify-center py-10">
                   <div className="animate-pulse flex gap-2">
                     <div className="h-2 w-2 bg-primary/50 rounded-full" />
-                    <div className="h-2 w-2 bg-primary/50 rounded-full animation-delay-200" />
-                    <div className="h-2 w-2 bg-primary/50 rounded-full animation-delay-400" />
+                    <div className="h-2 w-2 bg-primary/50 rounded-full" />
+                    <div className="h-2 w-2 bg-primary/50 rounded-full" />
                   </div>
                 </div>
               ) : (
@@ -204,48 +253,27 @@ export default function ChatPage() {
                   {activeConversation?.messages?.map((msg) => (
                     <div
                       key={msg.id}
-                      className={cn(
-                        "flex w-full",
-                        msg.role === "user" ? "justify-end" : "justify-start"
-                      )}
+                      className={cn("flex w-full", msg.role === "user" ? "justify-end" : "justify-start")}
                     >
-                      <div
-                        className={cn(
-                          "max-w-[85%] rounded-2xl px-5 py-4 text-base",
-                          msg.role === "user"
-                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                            : "glass-panel text-foreground"
-                        )}
-                      >
-                        {msg.role === "assistant" && (
-                          <div className="flex items-center gap-2 mb-2 text-primary text-sm font-medium">
-                            <Sparkles className="h-4 w-4" />
-                          </div>
-                        )}
-                        <MarkdownText content={msg.content} />
-                      </div>
+                      {msg.role === "user" ? (
+                        <div
+                          className="max-w-[85%] rounded-2xl px-5 py-4 text-base shadow-lg transition-all duration-300"
+                          style={{
+                            backgroundColor: settings.userBubbleColor,
+                            color: settings.userBubbleTextColor,
+                          }}
+                        >
+                          {msg.content}
+                        </div>
+                      ) : (
+                        <AssistantBubble content={msg.content} />
+                      )}
                     </div>
                   ))}
 
                   {isStreaming && (
                     <div className="flex w-full justify-start">
-                      <div className="max-w-[85%] rounded-2xl px-5 py-4 text-base glass-panel text-foreground">
-                        <div className="flex items-center gap-2 mb-2 text-primary text-sm font-medium">
-                          <Sparkles className="h-4 w-4" />
-                        </div>
-                        {streamingContent ? (
-                          <>
-                            <MarkdownText content={streamingContent} className="inline" />
-                            <span className="inline-block w-1.5 h-4 ml-1 bg-primary animate-pulse align-middle" />
-                          </>
-                        ) : (
-                          <div className="flex items-center h-6 gap-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" />
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:0.2s]" />
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce [animation-delay:0.4s]" />
-                          </div>
-                        )}
-                      </div>
+                      <AssistantBubble content={streamingContent} isStreaming />
                     </div>
                   )}
                 </>
@@ -254,8 +282,8 @@ export default function ChatPage() {
           )}
         </div>
 
-        {/* Input Area */}
-        <div className="p-4 md:p-6 bg-gradient-to-t from-background/80 to-transparent">
+        {/* Input */}
+        <div className="p-4 md:p-6 bg-gradient-to-t from-background/80 to-transparent transition-colors duration-500">
           <form
             onSubmit={handleSendMessage}
             className="max-w-3xl mx-auto relative flex items-center bg-white/5 border border-white/10 rounded-full p-1.5 shadow-xl backdrop-blur-xl transition-all focus-within:border-primary/50 focus-within:bg-white/10"
@@ -264,14 +292,20 @@ export default function ChatPage() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Message..."
-              className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 text-white placeholder:text-muted-foreground"
+              className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 text-foreground placeholder:text-muted-foreground"
               disabled={isStreaming}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(e as any);
+                }
+              }}
             />
             <Button
               type="submit"
               size="icon"
               disabled={!inputMessage.trim() || isStreaming}
-              className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 w-10 flex-shrink-0"
+              className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 w-10 flex-shrink-0 transition-all duration-300"
             >
               <Send className="h-4 w-4" />
             </Button>

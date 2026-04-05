@@ -220,3 +220,13 @@
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
+
+/* Smooth transitions for live theme changes */
+*, *::before, *::after {
+  transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease, box-shadow 0.4s ease;
+}
+
+/* But don't apply transitions to elements that should be instant */
+input, textarea, button {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease, opacity 0.15s ease, transform 0.15s ease !important;
+}
