@@ -4,7 +4,7 @@ import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Plus, MessageSquare, Send, Trash2, Bot } from "lucide-react";
+import { Sparkles, Plus, MessageSquare, Send, Trash2 } from "lucide-react";
 import {
   useListOpenaiConversations,
   useCreateOpenaiConversation,
@@ -184,7 +184,7 @@ export default function ChatPage() {
               </div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">How can I help you today?</h2>
               <p className="text-muted-foreground text-lg">
-                I am Nova, your premium AI assistant. Ask me anything.
+                Ask me anything — I'm here to help.
               </p>
             </div>
           )}
@@ -219,8 +219,7 @@ export default function ChatPage() {
                       >
                         {msg.role === "assistant" && (
                           <div className="flex items-center gap-2 mb-2 text-primary text-sm font-medium">
-                            <Bot className="h-4 w-4" />
-                            Nova
+                            <Sparkles className="h-4 w-4" />
                           </div>
                         )}
                         <MarkdownText content={msg.content} />
@@ -232,8 +231,7 @@ export default function ChatPage() {
                     <div className="flex w-full justify-start">
                       <div className="max-w-[85%] rounded-2xl px-5 py-4 text-base glass-panel text-foreground">
                         <div className="flex items-center gap-2 mb-2 text-primary text-sm font-medium">
-                          <Bot className="h-4 w-4" />
-                          Nova
+                          <Sparkles className="h-4 w-4" />
                         </div>
                         {streamingContent ? (
                           <>
@@ -265,7 +263,7 @@ export default function ChatPage() {
             <Input
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Ask Nova anything..."
+              placeholder="Message..."
               className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-4 text-white placeholder:text-muted-foreground"
               disabled={isStreaming}
             />
@@ -279,7 +277,7 @@ export default function ChatPage() {
             </Button>
           </form>
           <div className="text-center mt-3 text-xs text-muted-foreground/60">
-            Nova can make mistakes. Consider verifying important information.
+            AI can make mistakes. Consider verifying important information.
           </div>
         </div>
       </div>
