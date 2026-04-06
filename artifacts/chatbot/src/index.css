@@ -221,17 +221,150 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Scrollbar */
-.scrollbar-thin::-webkit-scrollbar { width: 4px; }
-.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+/* ═══════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════ */
+.scrollbar-thin::-webkit-scrollbar        { width: 3px; }
+.scrollbar-thin::-webkit-scrollbar-track  { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.08); border-radius: 2px; }
+.no-scrollbar::-webkit-scrollbar          { display: none; }
+.no-scrollbar                             { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Smooth transitions for live theme changes */
+/* ═══════════════════════════════════════════
+   GLASS BUBBLE VARIANTS
+═══════════════════════════════════════════ */
+.glass-bubble {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.solid-bubble {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+}
+.minimal-bubble {
+  background: transparent;
+  border: none;
+}
+
+/* ═══════════════════════════════════════════
+   APP HEADER – gradient shimmer strip
+═══════════════════════════════════════════ */
+.app-header {
+  background: rgba(8,10,20,0.80);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ═══════════════════════════════════════════
+   GRADIENT TEXT (animated)
+═══════════════════════════════════════════ */
+.gradient-text {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--foreground)) 40%,
+    hsl(var(--primary)) 80%,
+    hsl(var(--foreground)) 100%
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-pan 4s linear infinite;
+}
+@keyframes gradient-pan {
+  0%   { background-position: 0% center; }
+  100% { background-position: 250% center; }
+}
+
+/* ═══════════════════════════════════════════
+   MESSAGE ENTRANCE
+═══════════════════════════════════════════ */
+.animate-msg-in {
+  animation: msg-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* ═══════════════════════════════════════════
+   AVATAR PULSING RINGS
+═══════════════════════════════════════════ */
+.animate-ring-1 {
+  animation: ring-pulse 2.5s ease-out infinite;
+}
+.animate-ring-2 {
+  animation: ring-pulse 2.5s ease-out 1.2s infinite;
+}
+@keyframes ring-pulse {
+  0%   { transform: scale(1);   opacity: 0.5; }
+  70%  { transform: scale(1.5); opacity: 0;   }
+  100% { transform: scale(1.5); opacity: 0;   }
+}
+
+/* ═══════════════════════════════════════════
+   INPUT GLOW ON FOCUS
+═══════════════════════════════════════════ */
+.input-glow:focus-within {
+  border-color: hsl(var(--primary) / 0.45) !important;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12), 0 0 24px hsl(var(--primary) / 0.08);
+}
+
+/* ═══════════════════════════════════════════
+   SEND BUTTON GLOW PULSE
+═══════════════════════════════════════════ */
+.send-glow {
+  animation: send-breathe 2.5s ease-in-out infinite;
+}
+@keyframes send-breathe {
+  0%, 100% { box-shadow: 0 4px 14px hsl(var(--primary) / 0.35); }
+  50%       { box-shadow: 0 4px 28px hsl(var(--primary) / 0.60); }
+}
+
+/* ═══════════════════════════════════════════
+   FLOATING / HOVER FLOAT
+═══════════════════════════════════════════ */
+.animate-float {
+  animation: float 3.5s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px);  }
+  50%       { transform: translateY(-6px); }
+}
+
+/* ═══════════════════════════════════════════
+   SHIMMER (loading effect)
+═══════════════════════════════════════════ */
+.shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ═══════════════════════════════════════════
+   SMOOTH THEME TRANSITIONS
+═══════════════════════════════════════════ */
 *, *::before, *::after {
-  transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease, box-shadow 0.4s ease;
+  transition: background-color 0.4s ease, border-color 0.4s ease,
+              color 0.3s ease, box-shadow 0.4s ease;
+}
+input, textarea, button, a {
+  transition: background-color 0.18s ease, border-color 0.18s ease,
+              color 0.15s ease, opacity 0.15s ease,
+              transform 0.15s ease, box-shadow 0.2s ease !important;
 }
 
-/* But don't apply transitions to elements that should be instant */
-input, textarea, button {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease, opacity 0.15s ease, transform 0.15s ease !important;
-}
+/* ═══════════════════════════════════════════
+   SAFE AREA (mobile / PWA)
+═══════════════════════════════════════════ */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+html, body { height: 100%; overscroll-behavior: none; }
+

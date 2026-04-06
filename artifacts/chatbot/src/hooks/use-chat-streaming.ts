@@ -25,8 +25,30 @@ export function useChatStreaming({ conversationId }: UseChatStreamingProps) {
           }
         );
 
-        if (!response.body) throw new Error("No response body");
+        if (!response.ok) throw new Error("Request failed");
 
+        const contentType = response.headers.get("content-type") || "";
+
+        // Netlify Functions return JSON (non-streaming)
+        if (contentType.includes("application/json")) {
+          const data = await response.json();
+          if (data.content) {
+            // Simulate a smooth typing effect for the full response
+            const words = data.content.split(" ");
+            for (let i = 0; i <= words.length; i++) {
+              await new Promise((r) => setTimeout(r, 18));
+              setStreamingContent(words.slice(0, i).join(" "));
+            }
+          }
+          setIsStreaming(false);
+          queryClient.invalidateQueries({
+            queryKey: [`/api/openai/conversations/${currentConversationId}`],
+          });
+          return;
+        }
+
+        // Replit / SSE streaming
+        if (!response.body) throw new Error("No response body");
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
@@ -43,15 +65,9 @@ export function useChatStreaming({ conversationId }: UseChatStreamingProps) {
             if (line.startsWith("data: ")) {
               try {
                 const data = JSON.parse(line.slice(6));
-                if (data.content) {
-                  setStreamingContent((prev) => prev + data.content);
-                }
-                if (data.done) {
-                  setIsStreaming(false);
-                }
-              } catch (e) {
-                console.error("Error parsing streaming data:", e);
-              }
+                if (data.content) setStreamingContent((prev) => prev + data.content);
+                if (data.done) setIsStreaming(false);
+              } catch {}
             }
           }
         }
@@ -67,9 +83,5 @@ export function useChatStreaming({ conversationId }: UseChatStreamingProps) {
     [queryClient]
   );
 
-  return {
-    sendMessage,
-    isStreaming,
-    streamingContent,
-  };
+  return { sendMessage, isStreaming, streamingContent };
 }
