@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { ChatbotAvatar } from "@/components/ChatbotAvatar";
 import { CustomizationPanel } from "@/components/CustomizationPanel";
+import { RobotAvatar, RobotState } from "@/components/RobotAvatar";
 import { Button } from "@/components/ui/button";
 import { Plus, Send, Zap, Image, Laugh, HelpCircle, ChevronUp, ChevronDown } from "lucide-react";
 import {
@@ -158,6 +159,15 @@ const SKILLS_BAR = [
   { icon: <Zap className="h-3.5 w-3.5" />,       label: "/help",   cmd: "/help" },
 ];
 
+/* ─── ROBOT STATE LABEL ─────────────────────────────── */
+const STATE_LABELS: Record<RobotState, string> = {
+  idle:       "Standing by",
+  typing:     "Listening…",
+  thinking:   "Processing…",
+  responding: "Responding…",
+  delivered:  "Done!",
+};
+
 export default function ChatPage() {
   const queryClient = useQueryClient();
   const { settings } = useCustomization();
@@ -167,6 +177,8 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [convId, setConvId] = useState<number | null>(null);
   const [skillsOpen, setSkillsOpen] = useState(false);
+  const [robotState, setRobotState] = useState<RobotState>("idle");
+  const deliverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -181,6 +193,43 @@ export default function ChatPage() {
 
   const { sendMessage, isStreaming, streamingContent } = useChatStreaming({ conversationId: convId || undefined });
 
+  /* ─── ROBOT STATE MACHINE ───────────────────────── */
+  // Typing → set while input has chars and not streaming
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    if (e.target.value.trim() && !isStreaming) {
+      setRobotState("typing");
+    } else if (!e.target.value.trim() && !isStreaming) {
+      setRobotState("idle");
+    }
+  };
+
+  // Watch streaming to drive thinking → responding → delivered → idle
+  const prevStreamingRef = useRef(false);
+  useEffect(() => {
+    const wasStreaming = prevStreamingRef.current;
+    prevStreamingRef.current = isStreaming;
+
+    if (isStreaming && !wasStreaming) {
+      // Just started streaming (thinking phase before first token)
+      setRobotState("thinking");
+    }
+    if (isStreaming && streamingContent) {
+      // Tokens arriving → responding
+      setRobotState("responding");
+    }
+    if (!isStreaming && wasStreaming) {
+      // Streaming just ended → delivered
+      setRobotState("delivered");
+      if (deliverTimerRef.current) clearTimeout(deliverTimerRef.current);
+      deliverTimerRef.current = setTimeout(() => setRobotState("idle"), 2000);
+    }
+  }, [isStreaming, streamingContent]);
+
+  // Cleanup timer on unmount
+  useEffect(() => () => { if (deliverTimerRef.current) clearTimeout(deliverTimerRef.current); }, []);
+
+  /* ─── Session init ──────────────────────────────── */
   useEffect(() => {
     if (!sessionStorage.getItem("nova-session")) {
       sessionStorage.setItem("nova-session", "1");
@@ -189,6 +238,7 @@ export default function ChatPage() {
     }
   }, []);
 
+  /* ─── Auto scroll ───────────────────────────────── */
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
@@ -199,6 +249,7 @@ export default function ChatPage() {
     setLocalMessages([]);
     setInput("");
     setSkillsOpen(false);
+    setRobotState("idle");
     setTimeout(() => inputRef.current?.focus(), 80);
   };
 
@@ -208,6 +259,7 @@ export default function ChatPage() {
     if (!msg || isStreaming) return;
     setInput("");
     setSkillsOpen(false);
+    setRobotState("thinking");
 
     const skill = processSkill(msg);
     if (skill.type !== "none") {
@@ -216,6 +268,8 @@ export default function ChatPage() {
         { id: Date.now() + "-u", role: "user", content: msg },
         { id: Date.now() + "-s", role: "skill", content: skill.content, skillResult: skill },
       ]);
+      setRobotState("delivered");
+      deliverTimerRef.current = setTimeout(() => setRobotState("idle"), 1500);
       return;
     }
 
@@ -243,6 +297,42 @@ export default function ChatPage() {
     <div className="flex flex-col h-[100dvh] w-full overflow-hidden text-foreground relative" style={{ maxWidth: "100vw" }}>
       <AnimatedBackground />
 
+      {/* ── FLOATING ROBOT AVATAR ───────────────────── */}
+      <div
+        className={cn(
+          "fixed right-3 bottom-24 z-30 pointer-events-none select-none",
+          "transition-all duration-500",
+          robotState === "idle"       && "opacity-40 scale-90",
+          robotState === "typing"     && "opacity-70 scale-95",
+          robotState === "thinking"   && "opacity-90 scale-100",
+          robotState === "responding" && "opacity-95 scale-105",
+          robotState === "delivered"  && "opacity-80 scale-95",
+        )}
+      >
+        {/* Glow ring behind robot */}
+        <div
+          className={cn(
+            "absolute inset-0 rounded-full blur-2xl transition-all duration-500",
+            robotState === "thinking"   && "opacity-60 scale-150",
+            robotState === "responding" && "opacity-50 scale-140",
+            ["idle","typing","delivered"].includes(robotState) && "opacity-20 scale-110",
+          )}
+          style={{ background: settings.primaryColor }}
+        />
+        <RobotAvatar state={robotState} className="relative" style={{ width: 80, height: 120 } as React.CSSProperties} />
+
+        {/* State label badge */}
+        <div className={cn(
+          "absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap",
+          "text-[9px] font-mono px-2 py-0.5 rounded-full border transition-all duration-300",
+          robotState === "idle"       && "opacity-0",
+          robotState !== "idle"       && "opacity-100",
+          "bg-black/60 border-primary/30 text-primary/80",
+        )}>
+          {STATE_LABELS[robotState]}
+        </div>
+      </div>
+
       {/* TOP BAR */}
       <header className="relative z-20 flex items-center justify-between px-4 py-3 app-header flex-shrink-0">
         <div className="flex items-center gap-2.5">
@@ -254,8 +344,13 @@ export default function ChatPage() {
           <div>
             <h1 className="font-bold text-sm leading-none gradient-text">{settings.chatbotName}</h1>
             <p className="text-[10px] text-primary/60 font-mono mt-0.5 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              Online
+              <span className={cn(
+                "w-1.5 h-1.5 rounded-full transition-colors duration-300",
+                robotState === "thinking" || robotState === "responding"
+                  ? "bg-yellow-400 animate-pulse"
+                  : "bg-green-400 animate-pulse"
+              )} />
+              {robotState === "thinking" ? "Thinking…" : robotState === "responding" ? "Responding…" : "Online"}
             </p>
           </div>
         </div>
@@ -285,7 +380,7 @@ export default function ChatPage() {
             </div>
             <div className="grid grid-cols-2 gap-2 w-full max-w-xs">
               {QUICK_PROMPTS.map((p) => (
-                <button key={p.cmd} onClick={() => setInput(p.cmd)}
+                <button key={p.cmd} onClick={() => { setInput(p.cmd); setRobotState("typing"); }}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 text-left hover:bg-white/10 hover:border-primary/30 transition-all duration-300 group">
                   <span className="text-base group-hover:scale-110 transition-transform">{p.emoji}</span>
                   <span className="text-xs text-muted-foreground group-hover:text-foreground font-mono">{p.label}</span>
@@ -296,7 +391,7 @@ export default function ChatPage() {
         )}
 
         {hasMessages && (
-          <div className="flex flex-col gap-3 pb-2">
+          <div className="flex flex-col gap-3 pb-2 pr-24">
             {allMessages.map((m) => (
               <Bubble key={m.id} role={m.role} content={m.content} />
             ))}
@@ -314,9 +409,9 @@ export default function ChatPage() {
           "overflow-hidden transition-all duration-300",
           skillsOpen ? "max-h-16 opacity-100 mb-2" : "max-h-0 opacity-0"
         )}>
-          <div className="flex gap-2 pb-1 overflow-x-auto no-scrollbar">
+          <div className="flex gap-2 pb-1 overflow-x-auto no-scrollbar pr-20">
             {SKILLS_BAR.map((s) => (
-              <button key={s.label} onClick={() => { setInput(s.cmd); setSkillsOpen(false); inputRef.current?.focus(); }}
+              <button key={s.label} onClick={() => { setInput(s.cmd); setSkillsOpen(false); setRobotState("typing"); inputRef.current?.focus(); }}
                 className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/25 bg-primary/10 text-primary text-xs font-mono hover:bg-primary/20 transition-all">
                 {s.icon} {s.label}
               </button>
@@ -325,7 +420,7 @@ export default function ChatPage() {
         </div>
 
         {/* INPUT BAR */}
-        <div className="flex items-center gap-2 pb-safe mb-3">
+        <div className="flex items-center gap-2 pb-safe mb-3 pr-0">
           <button onClick={() => setSkillsOpen((v) => !v)}
             className="flex-shrink-0 h-11 w-11 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/10 transition-all">
             {skillsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
@@ -336,11 +431,13 @@ export default function ChatPage() {
             <input
               ref={inputRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               placeholder="Message…"
               disabled={isStreaming}
               className="flex-1 bg-transparent border-0 outline-none text-sm text-foreground placeholder:text-muted-foreground/50 font-sans min-w-0"
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) handleSend(e); }}
+              onFocus={() => { if (!input.trim() && !isStreaming) setRobotState("idle"); }}
+              onBlur={() => { if (!input.trim() && !isStreaming) setRobotState("idle"); }}
             />
             <button type="submit" disabled={!input.trim() || isStreaming}
               className={cn(

@@ -1,0 +1,361 @@
+/* ══════════════════════════════════════════════════════
+   ROBOT AVATAR — State-Driven Animations
+   States: idle | typing | thinking | responding | delivered
+══════════════════════════════════════════════════════ */
+
+/* ── Base wrap ─────────────────────────────────────── */
+.robot-avatar-wrap {
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+              filter 0.5s ease,
+              opacity 0.4s ease;
+  will-change: transform;
+}
+.robot-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ── Shared sub-element transitions ─────────────────── */
+.robot-pupil,
+.robot-chest-core,
+.robot-chest-core-inner,
+.robot-antenna-tip,
+.robot-ear-light,
+.robot-dot-1,
+.robot-dot-2,
+.mouth-seg {
+  transition: opacity 0.4s ease, r 0.4s ease;
+}
+
+/* ══════════════════════════════════════════════════════
+   IDLE STATE
+══════════════════════════════════════════════════════ */
+.robot-idle .robot-head,
+.robot-idle .robot-arm-left,
+.robot-idle .robot-arm-right,
+.robot-idle .robot-body,
+.robot-idle .robot-base {
+  animation: robot-float 4s ease-in-out infinite;
+}
+.robot-idle .robot-antenna-tip {
+  animation: antenna-blink-slow 3s ease-in-out infinite;
+}
+.robot-idle .robot-chest-core-inner {
+  animation: chest-breathe 4s ease-in-out infinite;
+}
+.robot-idle .robot-eye-left,
+.robot-idle .robot-eye-right {
+  animation: eye-blink 5s ease-in-out infinite;
+}
+.robot-idle .robot-ear-light {
+  animation: ear-pulse 4s ease-in-out infinite;
+}
+.robot-idle .mouth-seg {
+  opacity: 0.18;
+}
+
+/* ══════════════════════════════════════════════════════
+   TYPING STATE
+══════════════════════════════════════════════════════ */
+.robot-typing .robot-head {
+  animation: robot-lean-forward 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             robot-float-typing 3s ease-in-out 0.5s infinite;
+}
+.robot-typing .robot-body,
+.robot-typing .robot-base {
+  animation: robot-float-typing 3s ease-in-out infinite;
+}
+.robot-typing .robot-arm-left {
+  animation: arm-tap-left 0.6s ease-in-out infinite alternate;
+}
+.robot-typing .robot-arm-right {
+  animation: arm-tap-right 0.6s ease-in-out 0.15s infinite alternate;
+}
+.robot-typing .robot-antenna-tip {
+  animation: antenna-blink-fast 0.8s ease-in-out infinite;
+}
+.robot-typing .robot-pupil {
+  animation: eye-focus 1s ease-in-out infinite alternate;
+}
+.robot-typing .robot-chest-core-inner {
+  animation: chest-active 0.8s ease-in-out infinite;
+}
+.robot-typing .mouth-seg {
+  opacity: 0.25;
+}
+
+/* ══════════════════════════════════════════════════════
+   THINKING STATE (AI processing)
+══════════════════════════════════════════════════════ */
+.robot-thinking .robot-head {
+  animation: robot-think-tilt 2s ease-in-out infinite;
+}
+.robot-thinking .robot-body,
+.robot-thinking .robot-base {
+  animation: robot-float-slow 3s ease-in-out infinite;
+}
+.robot-thinking .robot-eye-left .robot-pupil,
+.robot-thinking .robot-eye-right .robot-pupil {
+  animation: eye-spin-glow 1.8s linear infinite;
+}
+.robot-thinking .robot-scan-line {
+  animation: scan-sweep 1.4s ease-in-out infinite !important;
+  opacity: 0.8 !important;
+}
+.robot-thinking .robot-antenna-tip {
+  animation: antenna-think 0.5s ease-in-out infinite;
+}
+.robot-thinking .robot-chest-core {
+  animation: chest-pulse-big 1s ease-in-out infinite;
+}
+.robot-thinking .robot-chest-core-inner {
+  animation: chest-spin 2s linear infinite;
+}
+.robot-thinking .robot-arm-left {
+  animation: arm-think-left 2s ease-in-out infinite;
+}
+.robot-thinking .robot-arm-right {
+  animation: arm-think-right 2s ease-in-out infinite;
+}
+.robot-thinking .robot-dot-1 {
+  animation: dot-pulse 0.6s ease-in-out infinite;
+}
+.robot-thinking .robot-dot-2 {
+  animation: dot-pulse 0.6s ease-in-out 0.3s infinite;
+}
+.robot-thinking .mouth-seg {
+  animation: mouth-think 0.4s ease-in-out infinite alternate;
+}
+
+/* ══════════════════════════════════════════════════════
+   RESPONDING STATE
+══════════════════════════════════════════════════════ */
+.robot-responding .robot-head {
+  animation: robot-respond-nod 0.8s ease-in-out infinite alternate;
+}
+.robot-responding .robot-body,
+.robot-responding .robot-base {
+  animation: robot-float-respond 2.5s ease-in-out infinite;
+}
+.robot-responding .robot-arm-left {
+  animation: arm-gesture-left 1.2s ease-in-out infinite alternate;
+}
+.robot-responding .robot-arm-right {
+  animation: arm-gesture-right 1.2s ease-in-out 0.4s infinite alternate;
+}
+.robot-responding .robot-chest-core-inner {
+  animation: chest-respond 0.5s ease-in-out infinite;
+}
+.robot-responding .robot-antenna-tip {
+  animation: antenna-blink-fast 0.4s ease-in-out infinite;
+}
+.robot-responding .mouth-seg {
+  animation: mouth-speak 0.3s ease-in-out infinite alternate;
+}
+.robot-responding .robot-pupil {
+  animation: eye-bright 0.8s ease-in-out infinite alternate;
+}
+
+/* ══════════════════════════════════════════════════════
+   DELIVERED STATE
+══════════════════════════════════════════════════════ */
+.robot-delivered .robot-head {
+  animation: robot-deliver-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.robot-delivered .robot-body,
+.robot-delivered .robot-base {
+  animation: robot-float 4s ease-in-out infinite;
+}
+.robot-delivered .robot-arm-right {
+  animation: arm-wave 0.8s ease-in-out 2;
+}
+.robot-delivered .robot-chest-core-inner {
+  animation: chest-celebrate 0.4s ease-in-out 3;
+}
+.robot-delivered .robot-antenna-tip {
+  animation: antenna-celebrate 0.3s ease-in-out 3;
+}
+.robot-delivered .mouth-seg {
+  opacity: 0.5;
+}
+.robot-delivered .robot-eye-left,
+.robot-delivered .robot-eye-right {
+  animation: eye-happy 0.6s ease-in-out forwards;
+}
+
+/* ══════════════════════════════════════════════════════
+   KEYFRAMES
+══════════════════════════════════════════════════════ */
+
+/* Float animations */
+@keyframes robot-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+@keyframes robot-float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-3px); }
+}
+@keyframes robot-float-typing {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+@keyframes robot-float-respond {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-5px); }
+}
+
+/* Head poses */
+@keyframes robot-lean-forward {
+  from { transform: translateY(0px) rotate(0deg); }
+  to   { transform: translateY(-2px) rotate(-3deg); }
+}
+@keyframes robot-think-tilt {
+  0%, 100% { transform: rotate(0deg) translateY(-2px); }
+  30%       { transform: rotate(-4deg) translateY(-4px); }
+  60%       { transform: rotate(3deg) translateY(-3px); }
+}
+@keyframes robot-respond-nod {
+  from { transform: translateY(-4px) rotate(-2deg); }
+  to   { transform: translateY(0px)  rotate(2deg); }
+}
+@keyframes robot-deliver-pop {
+  0%   { transform: scale(1) translateY(0px); }
+  40%  { transform: scale(1.12) translateY(-8px); }
+  70%  { transform: scale(0.96) translateY(-2px); }
+  100% { transform: scale(1) translateY(-4px); }
+}
+
+/* Eyes */
+@keyframes eye-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  96%            { transform: scaleY(0.05); }
+}
+@keyframes eye-focus {
+  from { opacity: 0.8; transform: scale(1); }
+  to   { opacity: 1;   transform: scale(1.15); }
+}
+@keyframes eye-spin-glow {
+  0%   { transform: scale(1.1); filter: brightness(1); }
+  50%  { transform: scale(1.3); filter: brightness(1.8) hue-rotate(30deg); }
+  100% { transform: scale(1.1); filter: brightness(1); }
+}
+@keyframes eye-bright {
+  from { opacity: 0.85; transform: scale(1); }
+  to   { opacity: 1;    transform: scale(1.2); }
+}
+@keyframes eye-happy {
+  0%   { transform: scaleY(1); }
+  30%  { transform: scaleY(0.3); }
+  60%  { transform: scaleY(1.2); }
+  100% { transform: scaleY(1); }
+}
+
+/* Scan line (thinking) */
+@keyframes scan-sweep {
+  0%   { transform: translateX(-20px); opacity: 0; }
+  20%  { opacity: 0.8; }
+  80%  { opacity: 0.8; }
+  100% { transform: translateX(20px); opacity: 0; }
+}
+
+/* Antenna */
+@keyframes antenna-blink-slow {
+  0%, 80%, 100% { opacity: 0.8; transform: scale(1); }
+  90%            { opacity: 0.2; transform: scale(0.8); }
+}
+@keyframes antenna-blink-fast {
+  0%, 100% { opacity: 1;   transform: scale(1.2); }
+  50%       { opacity: 0.3; transform: scale(0.8); }
+}
+@keyframes antenna-think {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50%       { opacity: 0.5; filter: brightness(2); }
+}
+@keyframes antenna-celebrate {
+  0%, 100% { opacity: 1;   transform: scale(1.5); filter: brightness(2); }
+  50%       { opacity: 0.6; transform: scale(0.9); }
+}
+
+/* Chest */
+@keyframes chest-breathe {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%       { opacity: 0.9; transform: scale(1.05); }
+}
+@keyframes chest-active {
+  0%, 100% { opacity: 0.8; }
+  50%       { opacity: 1; }
+}
+@keyframes chest-pulse-big {
+  0%, 100% { opacity: 0.1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(1.4); }
+}
+@keyframes chest-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes chest-respond {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.15); }
+}
+@keyframes chest-celebrate {
+  0%, 100% { opacity: 1;   transform: scale(1.3); filter: brightness(2); }
+  50%       { opacity: 0.7; transform: scale(0.9); }
+}
+
+/* Arms */
+@keyframes arm-tap-left {
+  from { transform: rotate(0deg) translateY(0px); }
+  to   { transform: rotate(-8deg) translateY(-4px); }
+}
+@keyframes arm-tap-right {
+  from { transform: rotate(0deg) translateY(0px); }
+  to   { transform: rotate(8deg) translateY(-4px); }
+}
+@keyframes arm-think-left {
+  0%, 100% { transform: rotate(-5deg) translateY(0px); }
+  50%       { transform: rotate(5deg) translateY(-6px); }
+}
+@keyframes arm-think-right {
+  0%, 100% { transform: rotate(5deg) translateY(0px); }
+  50%       { transform: rotate(-5deg) translateY(-6px); }
+}
+@keyframes arm-gesture-left {
+  from { transform: rotate(-12deg) translateY(-4px); }
+  to   { transform: rotate(4deg) translateY(2px); }
+}
+@keyframes arm-gesture-right {
+  from { transform: rotate(12deg) translateY(-4px); }
+  to   { transform: rotate(-4deg) translateY(2px); }
+}
+@keyframes arm-wave {
+  0%   { transform: rotate(0deg) translateY(0px); }
+  25%  { transform: rotate(-20deg) translateY(-8px); }
+  75%  { transform: rotate(10deg) translateY(-4px); }
+  100% { transform: rotate(0deg) translateY(0px); }
+}
+
+/* Ear lights */
+@keyframes ear-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
+}
+
+/* Side dots */
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50%       { opacity: 0.9; transform: scale(1.4); }
+}
+
+/* Mouth segments */
+@keyframes mouth-think {
+  from { opacity: 0.1; }
+  to   { opacity: 0.5; }
+}
+@keyframes mouth-speak {
+  0%   { transform: scaleY(1); opacity: 0.35; }
+  33%  { transform: scaleY(1.5); opacity: 0.6; }
+  66%  { transform: scaleY(0.7); opacity: 0.25; }
+  100% { transform: scaleY(1); opacity: 0.35; }
+}

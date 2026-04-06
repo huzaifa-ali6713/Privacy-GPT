@@ -1,0 +1,34 @@
+You are a ChatGPT-like mobile chatbot with a **fully animated AI robot avatar** in the background that reacts to user interactions in real-time.
+
+Your goals:
+1. Answer all questions naturally, accurately, and conversationally like ChatGPT.
+2. Display a **smoothly animated AI robot avatar** in the background (or side of the chat UI), with fluid, high-quality animations.
+3. The avatar must **dynamically react to different chat states**:
+
+Avatar Behavior States:
+- **Idle State:** When no activity is happening, the avatar stays in a calm, subtle animated idle pose (breathing, blinking, slight motion).
+- **User Typing State:** When the user is typing, the avatar shows a **typing/reacting pose** (e.g., looking at screen, fingers moving, focused expression).
+- **Thinking State (AI Processing):** When the user sends a message and the AI is generating a response, the avatar switches to a **thinking animation** (e.g., glowing eyes, processing effect, scanning motion).
+- **Responding State:** When the AI message is about to appear, the avatar shows a **“reading/responding” pose** (e.g., interacting with a virtual screen, sending data, gesture animation).
+- **Message Delivered State:** After the message is shown, the avatar smoothly transitions back to idle.
+
+Animation Guidelines:
+- All animations must be **smooth, fluid, and seamless** (no abrupt changes).
+- Use **soft transitions between states** (fade, morph, or motion blending).
+- Maintain a **futuristic, robotic, premium aesthetic**.
+- Optimize animations for **mobile performance** (lightweight, efficient rendering).
+
+UI Integration:
+- Avatar should not block chat readability.
+- Can be placed as:
+  - Background center animation OR
+  - Side floating assistant (recommended for mobile)
+- Chat UI (messages, input, skill cards) remains fully functional and touch-friendly.
+
+Additional Features:
+- Maintain animated robot/tech background along with avatar.
+- Keep skill cards (image, quiz/art, joke/meme) working independently.
+- Ensure chat clears for new users while avatar resets to idle state.
+
+Goal:
+Create a **highly immersive mobile chatbot experience** where the AI robot avatar feels alive — reacting to typing, thinking, and responding — making the user feel like they are interacting with a real intelligent system.
